@@ -2,16 +2,39 @@
 # -*- coding: utf-8 -*-
 
 from collections import namedtuple
-Item = namedtuple("Item", ['index', 'value', 'weight'])
+Item = namedtuple("Item", ['index', 'value', 'weight', 'ratio'])
 
-def value_weight_heuristics(items, capacity):
+
+def value_weight_heuristic(items, capacity):
+    """
+    Heuristic based on value-weight-ratio
+    :param items:
+    :param capacity:
+    :return:
+    """
+
     # variables
     value = 0
     weight = 0
     taken = [0] * len(items)
     opt = 0
+    items_w_ratio = []
 
+    # calculate ratio
     for item in items:
+        items_w_ratio.append(Item(
+            index=item.index,
+            value=item.value,
+            weight=item.weight,
+            ratio=item.value / item.weight
+        ))
+
+    # sort items by ratio
+    items_w_ratio.sort(key=lambda i: i.ratio, reverse=True)
+
+    print(capacity, items_w_ratio)
+
+    for item in items_w_ratio:
         if weight + item.weight <= capacity:
             taken[item.index] = 1
             value += item.value
@@ -30,15 +53,16 @@ def solve_it(input_instance):
     item_count = int(first_line[0])
     capacity = int(first_line[1])
 
+    # get data
     items = []
 
     for i in range(1, item_count+1):
         line = lines[i]
         parts = line.split()
-        items.append(Item(i-1, int(parts[0]), int(parts[1])))
+        items.append(Item(i-1, int(parts[0]), int(parts[1]), 0.0))
 
     # first greedy heuristics
-    value, weight, taken, opt = value_weight_heuristics(items, capacity)
+    value, weight, taken, opt = value_weight_heuristic(items, capacity)
 
     # prepare the solution in the specified output format
     output_data = str(value) + ' ' + str(opt) + '\n'
