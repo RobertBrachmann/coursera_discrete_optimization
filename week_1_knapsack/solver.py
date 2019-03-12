@@ -43,6 +43,25 @@ def value_weight_heuristic(items, capacity):
     return value, weight, taken, opt
 
 
+def linear_relaxation(items):
+    """
+    Relaxes capacity constraint and calculates optimistic estimation
+    :param items: list of items
+    :return: optimistic estimation
+    """
+
+    # optimistic estimation
+    estimation = 0
+
+    # sum all values
+    for item in items:
+        estimation += item.value
+
+    return estimation
+
+
+
+
 def solve_it(input_instance):
     # Modify this code to run your optimization algorithm
 
