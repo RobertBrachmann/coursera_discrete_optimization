@@ -4,15 +4,31 @@
 from collections import namedtuple
 Item = namedtuple("Item", ['index', 'value', 'weight'])
 
-def solve_it(input_data):
+def value_weight_heuristics(items, capacity):
+    # variables
+    value = 0
+    weight = 0
+    taken = [0] * len(items)
+    opt = 0
+
+    for item in items:
+        if weight + item.weight <= capacity:
+            taken[item.index] = 1
+            value += item.value
+            weight += item.weight
+
+    return value, weight, taken, opt
+
+
+def solve_it(input_instance):
     # Modify this code to run your optimization algorithm
 
     # parse the input
-    lines = input_data.split('\n')
+    lines = input_instance.split('\n')
 
-    firstLine = lines[0].split()
-    item_count = int(firstLine[0])
-    capacity = int(firstLine[1])
+    first_line = lines[0].split()
+    item_count = int(first_line[0])
+    capacity = int(first_line[1])
 
     items = []
 
@@ -21,20 +37,11 @@ def solve_it(input_data):
         parts = line.split()
         items.append(Item(i-1, int(parts[0]), int(parts[1])))
 
-    # a trivial greedy algorithm for filling the knapsack
-    # it takes items in-order until the knapsack is full
-    value = 0
-    weight = 0
-    taken = [0]*len(items)
+    # first greedy heuristics
+    value, weight, taken, opt = value_weight_heuristics(items, capacity)
 
-    for item in items:
-        if weight + item.weight <= capacity:
-            taken[item.index] = 1
-            value += item.value
-            weight += item.weight
-    
     # prepare the solution in the specified output format
-    output_data = str(value) + ' ' + str(0) + '\n'
+    output_data = str(value) + ' ' + str(opt) + '\n'
     output_data += ' '.join(map(str, taken))
     return output_data
 
@@ -42,10 +49,14 @@ def solve_it(input_data):
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
+        print(sys.argv)
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
         print(solve_it(input_data))
     else:
-        print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/ks_4_0)')
+        print('This test requires an input file.  '
+              'Please select one from the data directory. '
+              '(i.e. python solver.py ./data/ks_4_0)')
+
 

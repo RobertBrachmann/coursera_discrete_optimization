@@ -4,6 +4,7 @@
 from collections import namedtuple
 Item = namedtuple("Item", ['index', 'value', 'weight'])
 
+
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
 
@@ -41,8 +42,10 @@ def solve_it(input_data):
 
 if __name__ == '__main__':
     import sys
+    print(sys.argv)
     if len(sys.argv) > 1:
         file_location = sys.argv[1].strip()
+        print("FL:" + file_location)
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
         print(solve_it(input_data))
