@@ -13,6 +13,8 @@ class Node(object):
     def __init__(self, v, w, r, e, item_index):
         # node id
         self.id = None
+        # accumulated value
+        self.v_acc = 0
         # value
         self.v = v
         # weight
@@ -23,33 +25,46 @@ class Node(object):
         self.e = e
         # item index
         self.item_index = item_index
+        # take or leave
+        self.take = None
         # take item so far
-        self.taken_item = []
+        self.taken_items = []
+        # feasible
+        self.feasible = True
 
     def __str__(self):
         return "Node id             {id} \n" \
                "Item id:            {index} \n" \
+               "Take node:          {take} \n" \
+               "Acc. value:         {acc_val} \n" \
                "Value:              {value} \n" \
                "Weight:             {weight} \n" \
                "Slack:              {slack} \n" \
+               "Feasible:           {feasible} \n" \
                "Estimate:           {estimate} \n" \
                "Taken:              {taken} \n".format(
                     id=self.id,
                     index=self.item_index,
+                    take=self.take,
+                    acc_val=self.v_acc,
                     value=self.v,
                     weight=self.w,
                     slack=self.r,
+                    feasible=self.feasible,
                     estimate=self.e,
-                    taken=self.taken_item
+                    taken=self.taken_items
                 )
 
 
-def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_by_ratio=False):
+def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_strategy=None):
     """
     Simple branch and bound algorithm with different search strategies
+    :param sort_strategy: rd (sort items by value weight ration descending),
+                            ra (sort items by value weight ration ascending),
+                            gd (sort items greedy by value descending)
+                            ga (sort items greedy by value ascending)
     :param estimation: optimistic constraint from linear relaxation
     :param capacity: capacity constraint
-    :param sorted_by_ratio: sort items by value weight ration if True
     :param items: list of items
     :param search_strategy: df: depth first, bf: best first, ld: least discrepancy
     :return:value, weight, taken, opt, elapsed time
@@ -57,10 +72,21 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_b
     sys.setrecursionlimit(len(items) * len(items))
 
     # global variable
-    global best_value
     global node_id
-    best_value = 0
+
+    # global result variables
+    global best_value
+    global best_slack
+    global best_knapsack_weight
+    global best_node_id
+    global best_taken_items
+
     node_id = 1
+    best_value = 0
+    best_slack = None
+    best_knapsack_weight = None
+    best_node_id = None
+    best_taken_items = []
 
     # variables
     traversed_nodes = []
@@ -101,29 +127,46 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_b
 
     # start timer
     start = timer()
+
     # create start node
     start_node = Node(v=0, w=0, r=capacity, e=estimation, item_index=-1)
     start_node.id = 0
+    start_node.v_acc = 0
 
-    # sort items by value weight ratio
-    if sorted_by_ratio:
+    # sort items
+    if sort_strategy == "rd":
         items.sort(key=lambda i: i.value / i.weight, reverse=True)
+    elif sort_strategy == "ra":
+        items.sort(key=lambda i: i.value / i.weight, reverse=False)
+    elif sort_strategy == "gd":
+        items.sort(key=lambda i: i.value, reverse=True)
+    elif sort_strategy == "ga":
+        items.sort(key=lambda i: i.value, reverse=False)
 
     # branch and bound algorithms with different strategies
     if search_strategy == "df":
-        print("Start branch and bound algorithm depth first... \n")
+        print("Start branch and bound algorithm depth first, search {s}... \n".format(s=sort_strategy))
 
         # depth first search with recursive function
         def traverse(node, parent=None):
             # reference global variable
-            global best_value
             global node_id
+            # result variables
+            global best_value
+            global best_slack
+            global best_knapsack_weight
+            global best_node_id
+            global best_taken_items
+
             # if start next_node -> branch
             if not parent:
+
                 # add start node to traversed nodes
                 traversed_nodes.append(node)
+
                 # get next in items
                 next_node = get_next_item(list_of_items=items, current_item_index=node.item_index)
+
                 # branch if next item exists
                 if next_node:
                     traverse(node=next_node, parent=node)
@@ -132,62 +175,73 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_b
                 # branches node_1 = take item, node_0 = leave item
                 node_1 = copy.deepcopy(node)
                 node_1.id = node_id
+                node_1.take = True
                 node_id += 1
                 node_0 = copy.deepcopy(node)
                 node_0.id = node_id
+                node_0.take = False
                 node_id += 1
 
                 # case: take the item
-                # calculate value
-                node_1.v = parent.v + node_1.v
+                # set v_acc from parent
+                node_1.v_acc = parent.v_acc
+
                 # calculate remaining capacity
                 node_1.r = parent.r - node_1.w
+
                 # calculate estimate
                 node_1.e = parent.e
-                # update taken items
-                # TODO: fix taken items, weight accumulation
-                node_1.taken_item = copy.deepcopy(parent.taken_item)
-                node_1.taken_item.append(node_1.item_index)
+
                 # add to traversed nodes
                 traversed_nodes.append(node_1)
-                print("Take item")
-                print(node_1)
+
                 # check if feasible
                 if node_1.r >= 0:
 
-                    # update best value
-                    if node_1.v > best_value:
-                        best_value = node_1.v
+                    # calculate new v_acc
+                    node_1.v_acc = node_1.v_acc + node_1.v
+
+                    # update taken items
+                    node_1.taken_items = copy.deepcopy(parent.taken_items)
+                    node_1.taken_items.append(node_1.item_index)
+
+                    # update best solution
+                    if node_1.v_acc > best_value:
+                        best_value = node_1.v_acc
+                        best_taken_items = node_1.taken_items
+                        best_slack = node_1.r
+                        best_knapsack_weight = capacity - best_slack
+                        best_node_id = node_1.id
 
                     # compare best value to estimate -> branch or prune
                     if node_1.e > best_value:
+
                         # get next in items
                         next_node = get_next_item(items, node_1.item_index)
+
                         # branch if next item exists
                         if next_node:
-                            next_node.id = node_id
-                            node_id += 1
                             traverse(next_node, node_1)
 
                 # case: leave the item
                 # calculate value
                 node_0.v = parent.v
+
                 # calculate remaining capacity
                 node_0.r = parent.r
+
                 # calculate estimate
                 node_0.e = parent.e - node_0.v
-                # update taken items
-                # TODO: fix taken items, weight accumulation
-                node_0.taken_item = copy.deepcopy(parent.taken_item)
-                node_0.taken_item.append(node_0.item_index)
+
                 # add to traversed nodes
                 traversed_nodes.append(node_0)
-                print("Leave item")
-                print(node_0)
+
                 # compare best value to estimate -> branch or prune
                 if node_0.e > best_value:
+
                     # get next in items
                     next_node = get_next_item(items, node_0.item_index)
+
                     # branch if next item exists
                     if next_node:
                         traverse(node=next_node, parent=node_0)
@@ -204,33 +258,32 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_b
     end = timer()
 
     # get best solution
-    value = best_value
-    weight = None
-    slack = None
-    taken = []
     opt = 1
+    solution = []
     time = end - start
-
-    for node in traversed_nodes:
-        if node.v == best_value:
-            weight = node.w
-            slack = node.r
-            taken = node.taken_item
+    check_value = 0
+    check_weight = 0
+    for item in items:
+        if item.index in best_taken_items:
+            solution.append(1)
+            check_value = check_value + item.value
+            check_weight = check_weight + item.weight
+        else:
+            solution.append(0)
+    # check if solution is correct and feasible
+    if (check_value != best_value) and (check_weight > capacity):
+        raise ArithmeticError("Solution infeasible")
 
     desc = "Value:                 " + str(best_value) + "\n" \
-           "Weight:                " + str(weight) + "\n" \
-           "Slack:                 " + str(slack) + "\n" \
+           "Solution:              " + str(solution) + "\n" \
+           "Knapsack weight:       " + str(best_knapsack_weight) + "\n" \
+           "Slack:                 " + str(best_slack) + "\n" \
            "Traversed nodes:       " + str(len(traversed_nodes)) + "\n" \
-           "Taken items:           " + str(taken) + "\n"
+           "Taken items:           " + str(best_taken_items) + "\n" \
+           "Time elapsed (sec.):   " + str(time) + "\n" \
+           "BB Node id:            " + str(best_node_id) + "\n"
 
-    print(desc)
-
-    for node in traversed_nodes:
-        print(node)
-        if node.v == best_value:
-            print("Found")
-
-    return value, weight, taken, opt, time, desc
+    return best_value, best_knapsack_weight, solution, opt, time, desc
 
 
 def linear_relaxation(items):
@@ -263,27 +316,29 @@ def value_weight_heuristic(items, capacity):
     weight = 0
     taken = [0] * len(items)
     opt = 0
-    items_w_ratio = []
 
-    # calculate ratio
-    for item in items:
-        items_w_ratio.append(Item(
-            index=item.index,
-            value=item.value,
-            weight=item.weight,
-            ratio=item.value / item.weight
-        ))
+    # start timer
+    print("Start value_weight_heuristic")
+    start = timer()
 
     # sort items by ratio
-    items_w_ratio.sort(key=lambda i: i.ratio, reverse=True)
+    items.sort(key=lambda i: i.value / i.weight, reverse=True)
 
-    for item in items_w_ratio:
+    for item in items:
         if weight + item.weight <= capacity:
             taken[item.index] = 1
             value += item.value
             weight += item.weight
 
-    return value, weight, taken, opt
+    end = timer()
+
+    desc = "Value:                 " + str(value) + "\n" \
+           "Solution:              " + str(taken) + "\n" \
+           "Knapsack weight:       " + str(weight) + "\n" \
+           "Slack:                 " + str(capacity - weight) + "\n" \
+           "Time elapsed (sec.):   " + str(end - start) + "\n"
+
+    return value, weight, taken, opt, desc
 
 
 def solve_it(input_instance, instance_location=None):
@@ -304,29 +359,41 @@ def solve_it(input_instance, instance_location=None):
         parts = line.split()
         items.append(Item(i-1, int(parts[0]), int(parts[1]), 0.0))
 
+    solution = []
+
     # first greedy heuristics
-    # value, weight, taken, opt = value_weight_heuristic(items, capacity)
+    value, weight, taken, opt, desc = value_weight_heuristic(items, capacity)
+    print(desc)
+
+    solution.append([value, taken, opt])
 
     # estimation by linear relaxation
     estimation = linear_relaxation(items)
 
-    # branch and bound algorithm with depth first
-    value, weight, taken, opt, time, desc = branch_and_bound(items=items,
-                                                       capacity=capacity,
-                                                       estimation=estimation,
-                                                       search_strategy="df",
-                                                       sorted_by_ratio=True)
+    for s in ["rd", "ra", "gd", "ga"]:
+        # branch and bound algorithm with depth first, search strategy rd
+        value, weight, taken, opt, time, desc = branch_and_bound(items=items,
+                                                                 capacity=capacity,
+                                                                 estimation=estimation,
+                                                                 search_strategy="df",
+                                                                 sort_strategy=s)
+        print(desc)
+
+    solution.append([value, taken, opt])
+
+    # sort solutions by value
+    solution.sort(key=lambda sol: sol[0], reverse=True)
+    print(solution)
 
     # prepare the solution in the specified output format
-    output_data = str(value) + ' ' + str(opt) + '\n'
-    output_data += ' '.join(map(str, taken))
+    output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
+    output_data += ' '.join(map(str, solution[0][1]))
     return output_data
 
 
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
-        print(sys.argv)
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
