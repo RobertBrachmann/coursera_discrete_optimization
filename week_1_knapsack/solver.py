@@ -63,7 +63,7 @@ def gurobi_ip(items, capacity):
     pass
 
 
-def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_strategy=None):
+def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_strategy=None, time_limit=30):
     """
     Simple branch and bound algorithm with different search strategies
     :param sort_strategy: rd (sort items by value weight ration descending),
@@ -140,6 +140,8 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     start_node.id = 0
     start_node.v_acc = 0
 
+    check_items = copy.deepcopy(items)
+
     # sort items
     if sort_strategy == "rd":
         items.sort(key=lambda i: i.value / i.weight, reverse=True)
@@ -154,7 +156,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     if search_strategy == "df":
 
         # depth first search with recursive function
-        def traverse(node, parent=None):
+        def traverse(node, start_time, time_limit, parent=None):
             # reference global variable
             global node_id
             # result variables
@@ -175,8 +177,39 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
 
                 # branch if next item exists
                 if next_node:
-                    traverse(node=next_node, parent=node)
+                    traverse(node=next_node, parent=node, start_time=start_time, time_limit=time_limit)
             else:
+                elapsed = timer() - start_time
+                if elapsed > time_limit:
+
+                    # get best solution
+                    r_opt = 0
+                    r_solution = []
+                    r_check_value = 0
+                    r_check_weight = 0
+                    for r_item in check_items:
+                        if r_item.index in best_taken_items:
+                            r_solution.append(1)
+                            r_check_value = r_check_value + r_item.value
+                            r_check_weight = r_check_weight + r_item.weight
+                        else:
+                            r_solution.append(0)
+                    # check if solution is correct and feasible
+                    if (r_check_value != best_value) and (r_check_weight > capacity):
+                        raise ArithmeticError("Solution infeasible")
+
+                    desc = "Branch and Bound: algorithm depth first, search {s}... \n".format(s=sort_strategy) + "\n" \
+                           "Value:                 " + str(r_check_value) + "\n" \
+                           "Solution:              " + str(r_solution) + "\n" \
+                           "Knapsack weight:       " + str(r_check_weight) + "\n" \
+                           "Capacity constraint:   " + str(capacity) + "\n" \
+                           "Slack:                 " + str(best_slack) + "\n" \
+                           "Traversed nodes:       " + str(len(traversed_nodes)) + "\n" \
+                           "Taken items:           " + str(best_taken_items) + "\n" \
+                           "Time elapsed (sec.):   " + str(elapsed) + "\n" \
+                           "BB Node id:            " + str(best_node_id) + "\n"
+
+                    return best_value, best_knapsack_weight, r_solution, r_opt, elapsed, desc
 
                 # branches node_1 = take item, node_0 = leave item
                 node_1 = copy.deepcopy(node)
@@ -227,7 +260,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
 
                         # branch if next item exists
                         if next_node:
-                            traverse(next_node, node_1)
+                            traverse(node=next_node, parent=node_1, start_time=start_time, time_limit=time_limit)
 
                 # case: leave the item
                 # calculate value
@@ -250,10 +283,10 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
 
                     # branch if next item exists
                     if next_node:
-                        traverse(node=next_node, parent=node_0)
+                        traverse(node=next_node, parent=node_0, start_time=start_time, time_limit=time_limit)
 
         # start is own parent
-        traverse(node=start_node)
+        traverse(node=start_node, start_time=start, time_limit=time_limit)
 
     elif search_strategy == "bf":
         pass
@@ -269,7 +302,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     time = end - start
     check_value = 0
     check_weight = 0
-    for item in items:
+    for item in check_items:
         if item.index in best_taken_items:
             solution.append(1)
             check_value = check_value + item.value
@@ -281,9 +314,9 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
         raise ArithmeticError("Solution infeasible")
 
     desc = "Branch and Bound: algorithm depth first, search {s}... \n".format(s=sort_strategy) + "\n" \
-           "Value:                 " + str(best_value) + "\n" \
+           "Value:                 " + str(check_value) + "\n" \
            "Solution:              " + str(solution) + "\n" \
-           "Knapsack weight:       " + str(best_knapsack_weight) + "\n" \
+           "Knapsack weight:       " + str(check_weight) + "\n" \
            "Capacity constraint:   " + str(capacity) + "\n" \
            "Slack:                 " + str(best_slack) + "\n" \
            "Traversed nodes:       " + str(len(traversed_nodes)) + "\n" \
@@ -321,33 +354,48 @@ def value_weight_heuristic(items, capacity):
 
     # variables
     value = 0
+    check_value = 0
     weight = 0
-    taken = [0] * len(items)
+    check_weight = 0
+    taken = []
     opt = 0
+    solution = []
 
     # start timer
     start = timer()
 
     # sort items by ratio
+    check_items = copy.deepcopy(items)
     items.sort(key=lambda i: i.value / i.weight, reverse=True)
 
     for item in items:
         if weight + item.weight <= capacity:
-            taken[item.index] = 1
+            taken.append(item.index)
             value += item.value
             weight += item.weight
 
     end = timer()
+    for item in check_items:
+        if item.index in taken:
+            solution.append(1)
+            check_value = check_value + item.value
+            check_weight = check_weight + item.weight
+        else:
+            solution.append(0)
+
+    # check if solution is correct and feasible
+    if (check_value != value) and (check_weight > capacity):
+        raise ArithmeticError("Heuristic solution infeasible")
 
     desc = "Start value_weight_heuristic \n\n" \
            "Value:                 " + str(value) + "\n" \
-           "Solution:              " + str(taken) + "\n" \
+           "Solution:              " + str(solution) + "\n" \
            "Knapsack weight:       " + str(weight) + "\n" \
            "Capacity constraint:   " + str(capacity) + "\n"\
            "Slack:                 " + str(capacity - weight) + "\n" \
            "Time elapsed (sec.):   " + str(end - start) + "\n"
 
-    return value, weight, taken, opt, desc
+    return value, weight, taken, opt, end - start, desc
 
 
 def solve_it(input_instance, instance_location=None):
@@ -372,7 +420,7 @@ def solve_it(input_instance, instance_location=None):
     solution = []
 
     # first greedy heuristics
-    value, weight, taken, opt, desc = value_weight_heuristic(items, capacity)
+    value, weight, taken, opt, time, desc = value_weight_heuristic(items, capacity)
     print(desc)
 
     solution.append([value, taken, opt])
@@ -382,29 +430,18 @@ def solve_it(input_instance, instance_location=None):
 
     sort_strategies = ["rd", "ra", "gd", "ga"]
 
-    pool = ThreadPoolExecutor(4)
-    futures = []
     for strategy in sort_strategies:
-        futures.append(pool.submit(branch_and_bound, items, capacity, estimation, "df", strategy))
+        value, weight, taken, opt, time, desc = branch_and_bound(items, capacity, estimation, "df", strategy, 10)
+        solution.append([value, taken, opt])
+        print(desc)
 
-    result = None
-    while not result:
-        done_futures = wait(futures, return_when="FIRST_COMPLETED")
-        # futures = done_futures.not_done
-        for future in done_futures.done:
-            result = future.result()
-            value, weight, taken, opt, time, desc = result
-            if result:
-                solution.append([value, taken, opt])
-                print(desc)
+    # sort solutions by value
+    solution.sort(key=lambda sol: sol[0], reverse=True)
 
-                # sort solutions by value
-                solution.sort(key=lambda sol: sol[0], reverse=True)
-
-                # prepare the solution in the specified output format
-                output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
-                output_data += ' '.join(map(str, solution[0][1]))
-                return output_data
+    # prepare the solution in the specified output format
+    output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
+    output_data += ' '.join(map(str, solution[0][1]))
+    return output_data
 
 
 if __name__ == '__main__':
