@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import copy
+
 from collections import namedtuple
 from timeit import default_timer as timer
 
@@ -138,7 +139,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sorted_b
 
                 # case: take the item
                 # calculate value
-                node_1.v += parent.v
+                node_1.v = parent.v + node_1.v
                 # calculate remaining capacity
                 node_1.r = parent.r - node_1.w
                 # calculate estimate
