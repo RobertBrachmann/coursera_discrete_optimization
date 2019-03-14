@@ -76,7 +76,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     :param search_strategy: df: depth first, bf: best first, ld: least discrepancy
     :return:value, weight, taken, opt, elapsed time
     """
-    sys.setrecursionlimit(len(items) ** len(items))
+    sys.setrecursionlimit(len(items) * len(items))
 
     # global variable
     global node_id
@@ -284,6 +284,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
            "Value:                 " + str(best_value) + "\n" \
            "Solution:              " + str(solution) + "\n" \
            "Knapsack weight:       " + str(best_knapsack_weight) + "\n" \
+           "Capacity constraint:   " + str(capacity) + "\n" \
            "Slack:                 " + str(best_slack) + "\n" \
            "Traversed nodes:       " + str(len(traversed_nodes)) + "\n" \
            "Taken items:           " + str(best_taken_items) + "\n" \
@@ -325,7 +326,6 @@ def value_weight_heuristic(items, capacity):
     opt = 0
 
     # start timer
-    print("Start value_weight_heuristic")
     start = timer()
 
     # sort items by ratio
@@ -339,9 +339,11 @@ def value_weight_heuristic(items, capacity):
 
     end = timer()
 
-    desc = "Value:                 " + str(value) + "\n" \
+    desc = "Start value_weight_heuristic \n\n" \
+           "Value:                 " + str(value) + "\n" \
            "Solution:              " + str(taken) + "\n" \
            "Knapsack weight:       " + str(weight) + "\n" \
+           "Capacity constraint:   " + str(capacity) + "\n"\
            "Slack:                 " + str(capacity - weight) + "\n" \
            "Time elapsed (sec.):   " + str(end - start) + "\n"
 
@@ -385,27 +387,24 @@ def solve_it(input_instance, instance_location=None):
     for strategy in sort_strategies:
         futures.append(pool.submit(branch_and_bound, items, capacity, estimation, "df", strategy))
 
-    result = False
+    result = None
     while not result:
         done_futures = wait(futures, return_when="FIRST_COMPLETED")
         # futures = done_futures.not_done
         for future in done_futures.done:
-            tmp_result = future.result()
-            value, weight, taken, opt, time, desc = tmp_result
-            if tmp_result:
-                result = True
-                break
+            result = future.result()
+            value, weight, taken, opt, time, desc = result
+            if result:
+                solution.append([value, taken, opt])
+                print(desc)
 
-    solution.append([value, taken, opt])
-    print(desc)
+                # sort solutions by value
+                solution.sort(key=lambda sol: sol[0], reverse=True)
 
-    # sort solutions by value
-    solution.sort(key=lambda sol: sol[0], reverse=True)
-
-    # prepare the solution in the specified output format
-    output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
-    output_data += ' '.join(map(str, solution[0][1]))
-    return output_data
+                # prepare the solution in the specified output format
+                output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
+                output_data += ' '.join(map(str, solution[0][1]))
+                return output_data
 
 
 if __name__ == '__main__':
