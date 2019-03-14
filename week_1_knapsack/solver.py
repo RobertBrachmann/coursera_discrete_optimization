@@ -1,6 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import copy
+import sys
+from gurobipy import *
+from concurrent.futures import ThreadPoolExecutor, wait, as_completed
 
 from collections import namedtuple
 from timeit import default_timer as timer
@@ -56,6 +59,10 @@ class Node(object):
                 )
 
 
+def gurobi_ip(items, capacity):
+    pass
+
+
 def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_strategy=None):
     """
     Simple branch and bound algorithm with different search strategies
@@ -69,7 +76,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     :param search_strategy: df: depth first, bf: best first, ld: least discrepancy
     :return:value, weight, taken, opt, elapsed time
     """
-    sys.setrecursionlimit(len(items) * len(items))
+    sys.setrecursionlimit(len(items) ** len(items))
 
     # global variable
     global node_id
@@ -145,7 +152,6 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
 
     # branch and bound algorithms with different strategies
     if search_strategy == "df":
-        print("Start branch and bound algorithm depth first, search {s}... \n".format(s=sort_strategy))
 
         # depth first search with recursive function
         def traverse(node, parent=None):
@@ -258,7 +264,7 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     end = timer()
 
     # get best solution
-    opt = 1
+    opt = 0
     solution = []
     time = end - start
     check_value = 0
@@ -274,7 +280,8 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     if (check_value != best_value) and (check_weight > capacity):
         raise ArithmeticError("Solution infeasible")
 
-    desc = "Value:                 " + str(best_value) + "\n" \
+    desc = "Branch and Bound: algorithm depth first, search {s}... \n".format(s=sort_strategy) + "\n" \
+           "Value:                 " + str(best_value) + "\n" \
            "Solution:              " + str(solution) + "\n" \
            "Knapsack weight:       " + str(best_knapsack_weight) + "\n" \
            "Slack:                 " + str(best_slack) + "\n" \
@@ -343,6 +350,7 @@ def value_weight_heuristic(items, capacity):
 
 def solve_it(input_instance, instance_location=None):
     # Modify this code to run your optimization algorithm
+    print(instance_location)
 
     # parse the input
     lines = input_instance.split('\n')
@@ -370,20 +378,29 @@ def solve_it(input_instance, instance_location=None):
     # estimation by linear relaxation
     estimation = linear_relaxation(items)
 
-    for s in ["rd", "ra", "gd", "ga"]:
-        # branch and bound algorithm with depth first, search strategy rd
-        value, weight, taken, opt, time, desc = branch_and_bound(items=items,
-                                                                 capacity=capacity,
-                                                                 estimation=estimation,
-                                                                 search_strategy="df",
-                                                                 sort_strategy=s)
-        print(desc)
+    sort_strategies = ["rd", "ra", "gd", "ga"]
+
+    pool = ThreadPoolExecutor(4)
+    futures = []
+    for strategy in sort_strategies:
+        futures.append(pool.submit(branch_and_bound, items, capacity, estimation, "df", strategy))
+
+    result = False
+    while not result:
+        done_futures = wait(futures, return_when="FIRST_COMPLETED")
+        # futures = done_futures.not_done
+        for future in done_futures.done:
+            tmp_result = future.result()
+            value, weight, taken, opt, time, desc = tmp_result
+            if tmp_result:
+                result = True
+                break
 
     solution.append([value, taken, opt])
+    print(desc)
 
     # sort solutions by value
     solution.sort(key=lambda sol: sol[0], reverse=True)
-    print(solution)
 
     # prepare the solution in the specified output format
     output_data = str(solution[0][0]) + ' ' + str(solution[0][2]) + '\n'
@@ -397,10 +414,8 @@ if __name__ == '__main__':
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
-        print(solve_it(input_data, file_location))
+        print(solve_it(input_data, sys.argv))
     else:
         print('This test requires an input file.  '
               'Please select one from the data directory. '
               '(i.e. python solver.py ./data/ks_4_0)')
-
-
