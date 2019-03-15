@@ -29,6 +29,9 @@ def knapsack(items, capacity):
         # Add constraints
         m.addConstr(sum(x[i] * items[i].weight for i in x) <= capacity)
 
+        # set model parameter
+        m.setParam("MIPGap", 1e-5)
+
         m.optimize()
 
         solution = []
