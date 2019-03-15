@@ -12,34 +12,42 @@
 
 from gurobipy import *
 
-try:
 
-    # Create a new model
-    m = Model("mip1")
+def knapsack(items, capacity):
 
-    # Create variables
-    x = m.addVar(vtype=GRB.BINARY, name="x")
-    y = m.addVar(vtype=GRB.BINARY, name="y")
-    z = m.addVar(vtype=GRB.BINARY, name="z")
+    try:
 
-    # Set objective
-    m.setObjective(x + y + 2 * z, GRB.MAXIMIZE)
+        # Create a new model
+        m = Model("knapsack ip")
 
-    # Add constraint: x + 2 y + 3 z <= 4
-    m.addConstr(x + 2 * y + 3 * z <= 4, "c0")
+        # Create variables
+        x = m.addVars(len(items), vtype=GRB.BINARY, name="X")
 
-    # Add constraint: x + y >= 1
-    m.addConstr(x + y >= 1, "c1")
+        # Set objective
+        m.setObjective(sum(x[i] * items[i].value for i in x), GRB.MAXIMIZE)
 
-    m.optimize()
+        # Add constraints
+        m.addConstr(sum(x[i] * items[i].weight for i in x) <= capacity)
 
-    for v in m.getVars():
-        print('%s %g' % (v.varName, v.x))
+        m.optimize()
 
-    print('Obj: %g' % m.objVal)
+        solution = []
+        obj_value = int(m.objVal)
+        status = 0
 
-except GurobiError as e:
-    print('Error code ' + str(e.errno) + ": " + str(e))
+        if m.status == GRB.Status.OPTIMAL:
+            status = 1
 
-except AttributeError:
-    print('Encountered an attribute error')
+        for v in m.getVars():
+            if v.x == 1.0:
+                solution.append(1)
+            else:
+                solution.append(0)
+
+        return obj_value, status, solution
+
+    except GurobiError as e:
+        print('Error code ' + str(e.errno) + ": " + str(e))
+
+    except AttributeError:
+        print('Encountered an attribute error')

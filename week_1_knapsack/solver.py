@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor, wait, as_completed
 
 from collections import namedtuple
 from timeit import default_timer as timer
+from week_1_knapsack.gurobi_model import knapsack
 
 Item = namedtuple("Item", ['index', 'value', 'weight', 'ratio'])
 
@@ -187,6 +188,9 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
                     r_solution = []
                     r_check_value = 0
                     r_check_weight = 0
+                    # sort items by index
+                    best_taken_items.sort()
+                    items.sort(key=lambda i: i.index)
                     for r_item in check_items:
                         if r_item.index in best_taken_items:
                             r_solution.append(1)
@@ -302,7 +306,10 @@ def branch_and_bound(items, capacity, estimation, search_strategy="df", sort_str
     time = end - start
     check_value = 0
     check_weight = 0
-    for item in check_items:
+    # sort items by id
+    best_taken_items.sort()
+    items.sort(key=lambda i: i.index)
+    for item in items:
         if item.index in best_taken_items:
             solution.append(1)
             check_value = check_value + item.value
@@ -375,6 +382,8 @@ def value_weight_heuristic(items, capacity):
             weight += item.weight
 
     end = timer()
+    items.sort(key=lambda i: i.index)
+    taken.sort()
     for item in check_items:
         if item.index in taken:
             solution.append(1)
@@ -390,17 +399,16 @@ def value_weight_heuristic(items, capacity):
     desc = "Start value_weight_heuristic \n\n" \
            "Value:                 " + str(value) + "\n" \
            "Solution:              " + str(solution) + "\n" \
+           "Taken:                 " + str(taken) + "\n" \
            "Knapsack weight:       " + str(weight) + "\n" \
            "Capacity constraint:   " + str(capacity) + "\n"\
            "Slack:                 " + str(capacity - weight) + "\n" \
            "Time elapsed (sec.):   " + str(end - start) + "\n"
 
-    return value, weight, taken, opt, end - start, desc
+    return value, weight, solution, opt, end - start, desc
 
 
 def solve_it(input_instance, instance_location=None):
-    # Modify this code to run your optimization algorithm
-    print(instance_location)
 
     # parse the input
     lines = input_instance.split('\n')
@@ -422,18 +430,11 @@ def solve_it(input_instance, instance_location=None):
     # first greedy heuristics
     value, weight, taken, opt, time, desc = value_weight_heuristic(items, capacity)
     print(desc)
-
     solution.append([value, taken, opt])
 
-    # estimation by linear relaxation
-    estimation = linear_relaxation(items)
-
-    sort_strategies = ["rd", "ra", "gd", "ga"]
-
-    for strategy in sort_strategies:
-        value, weight, taken, opt, time, desc = branch_and_bound(items, capacity, estimation, "df", strategy, 10)
-        solution.append([value, taken, opt])
-        print(desc)
+    # gurobi model
+    value, opt, taken = knapsack(items=items, capacity=capacity)
+    solution.append([value, taken, opt])
 
     # sort solutions by value
     solution.sort(key=lambda sol: sol[0], reverse=True)
