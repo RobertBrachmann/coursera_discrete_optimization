@@ -20,7 +20,45 @@ class Node(object):
 
 
 def heuristic(node_objs):
-    pass
+    """
+    Simple heuristic for graph coloring problem
+    :param node_objs: list
+    :return: objective value, optimality (0), solution
+    """
+
+    # colors
+    colors = [0]
+
+    # sort by density
+    node_objs.sort(key=lambda n: len(n.edges))
+
+    # assign each node
+    for node in node_objs:
+        # check color of neighbours
+        for color in colors:
+            neighbour_colors = [neighbour.color if neighbour.id in node.edges else None for neighbour in node_objs]
+            if color not in neighbour_colors:
+                # assign color if no neighbour has color
+                node.color = color
+                break
+            else:
+                # create new color
+                new_color = max(colors) + 1
+                node.color = new_color
+                colors.append(new_color)
+                break
+
+    objective_value = len(colors)
+    optimality = 0
+
+    # sort nodes by id
+    node_objs.sort(key=lambda n: n.id)
+    solution = [node.color for node in node_objs]
+
+    # for node in node_objs:
+    #     print(node)
+
+    return objective_value, optimality, solution
 
 
 def solve_it(data):
@@ -30,7 +68,6 @@ def solve_it(data):
     lines = data.split('\n')
 
     first_line = lines[0].split()
-    node_count = int(first_line[0])
     edge_count = int(first_line[1])
 
     edges = []
@@ -46,27 +83,21 @@ def solve_it(data):
     nodes = list(set(nodes))
     node_objs = []
 
+    # create list of node objects
     for node in nodes:
-
         tmp_node = Node(node)
         for edge in edges:
             if edge[0] == node:
                 tmp_node.edges.append(edge[1])
-
             if edge[1] == node:
                 tmp_node.edges.append(edge[0])
-
         node_objs.append(tmp_node)
 
-    for node in node_objs:
-        print(node)
-
-    # build a trivial solution
-    # every node has its own color
-    solution = range(0, node_count)
+    # run heuristic
+    objective_value, optimality, solution = heuristic(node_objs)
 
     # prepare the solution in the specified output format
-    output_data = str(node_count) + ' ' + str(0) + '\n'
+    output_data = str(objective_value) + ' ' + str(optimality) + '\n'
     output_data += ' '.join(map(str, solution))
 
     return output_data
