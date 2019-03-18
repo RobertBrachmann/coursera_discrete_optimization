@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-# from week_2_graph_coloring.gurobi_model import graph_coloring
+from week_2_graph_coloring.gurobi_model import graph_coloring
 from week_2_graph_coloring.greedy_networkx import greedy_networkx
+
 
 class Node(object):
 
@@ -98,11 +98,12 @@ def solve_it(data):
     # run heuristic
     # objective_value, optimality, solution = heuristic(node_objs)
 
-    # greedy networkx
-    objective_value, optimality, solution = greedy_networkx(len(nodes), edges)
-
-    # run gurobi model
-    # objective_value, optimality, solution = graph_coloring(nodes, edges)
+    if len(node_objs) > 150:
+        # greedy networkx
+        objective_value, optimality, solution = greedy_networkx(len(nodes), edges)
+    else:
+        # run gurobi model
+        objective_value, optimality, solution = graph_coloring(nodes, edges)
 
     # prepare the solution in the specified output format
     output_data = str(objective_value) + ' ' + str(optimality) + '\n'
