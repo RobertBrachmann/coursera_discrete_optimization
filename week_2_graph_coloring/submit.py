@@ -214,7 +214,7 @@ def output(input_file, solver_file):
 
     solution = ''
 
-    start = time.clock()
+    start = time.process_time()
     try:
         solution = pkg.solve_it(load_input_data(input_file))
     except Exception as e:
@@ -224,7 +224,7 @@ def output(input_file, solver_file):
         print(str(e))
         print('')
         return 'Local Exception =('
-    end = time.clock()
+    end = time.process_time()
 
     if not (isinstance(solution, str) or isinstance(solution, unicode)):
         print('Warning: the solver did not return a string.  The given object will be converted with the str() method.')
