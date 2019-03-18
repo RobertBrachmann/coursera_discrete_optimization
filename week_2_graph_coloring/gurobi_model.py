@@ -47,6 +47,10 @@ def graph_coloring(nodes, edges, greedy_start=True):
                      name="ieq4")
 
         m.update()
+
+        # set model parameter
+        m.setParam("MIPGap", 1e-3)
+        m.setParam("TimeLimit", 40.0)
         m.optimize()
 
         # prepare solution
