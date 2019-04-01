@@ -3,11 +3,40 @@
 
 import math
 from collections import namedtuple
+from sklearn.cluster import KMeans
 
-Point = namedtuple("Point", ['x', 'y'])
+Point = namedtuple("Point", ['i', 'c', 'x', 'y'])
+
 
 def length(point1, point2):
-    return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2)
+    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
+
+
+def greedy_cluster_heuristic(points):
+
+    obj = 0
+    opt = 0
+    solution = []
+
+    # cluster point
+    cluster = KMeans(n_clusters=math.ceil(len(points)/5)).fit(points).labels_
+
+    # create nodes
+    nodes = []
+    for i, point in enumerate(points):
+        nodes.append(Point(i, cluster[i], point[0], point[1]))
+    nodes = sorted(nodes, key=lambda p: cluster[p.i])
+
+    # calculation objective
+    for i, node in enumerate(nodes):
+        solution.append(node.i)
+        if i == len(nodes) - 1:
+            obj += length(node, nodes[0])
+        else:
+            obj += length(node, nodes[i + 1])
+
+    return obj, opt, solution
+
 
 def solve_it(input_data):
     # Modify this code to run your optimization algorithm
@@ -21,16 +50,10 @@ def solve_it(input_data):
     for i in range(1, nodeCount+1):
         line = lines[i]
         parts = line.split()
-        points.append(Point(float(parts[0]), float(parts[1])))
-
-    # build a trivial solution
-    # visit the nodes in the order they appear in the file
-    solution = range(0, nodeCount)
+        points.append([float(parts[0]), float(parts[1])])
 
     # calculate the length of the tour
-    obj = length(points[solution[-1]], points[solution[0]])
-    for index in range(0, nodeCount-1):
-        obj += length(points[solution[index]], points[solution[index+1]])
+    obj, opt, solution = greedy_cluster_heuristic(points)
 
     # prepare the solution in the specified output format
     output_data = '%.2f' % obj + ' ' + str(0) + '\n'
