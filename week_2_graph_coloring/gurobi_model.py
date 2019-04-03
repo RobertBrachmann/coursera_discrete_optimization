@@ -50,7 +50,7 @@ def graph_coloring(nodes, edges, greedy_start=True):
 
         # set model parameter
         m.setParam("MIPGap", 1e-3)
-        m.setParam("TimeLimit", 40.0)
+        m.setParam("TimeLimit", 180.0)
         m.optimize()
 
         # prepare solution

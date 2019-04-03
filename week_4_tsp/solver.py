@@ -3,7 +3,10 @@
 
 import math
 from collections import namedtuple
+
+import numpy
 from sklearn.cluster import KMeans
+from week_4_tsp.gurobi_model import tsp
 
 Point = namedtuple("Point", ['i', 'c', 'x', 'y'])
 
@@ -19,23 +22,36 @@ def greedy_cluster_heuristic(points):
     solution = []
 
     # cluster point
-    cluster = KMeans(n_clusters=math.ceil(len(points)/5)).fit(points).labels_
+    km = KMeans(n_clusters=min(math.ceil(len(points)/5), 50)).fit(points)
+    cluster = km.labels_
+    centroids = []
+
+    # centroids
+    for i, center in enumerate(km.cluster_centers_):
+        centroids.append([i, round(center[0], 2), round(center[1], 2)])
+    # sort centroids
+    centroids.sort(key=lambda x: (x[1], x[2]))
 
     # create nodes
     nodes = []
     for i, point in enumerate(points):
         nodes.append(Point(i, cluster[i], point[0], point[1]))
-    nodes = sorted(nodes, key=lambda p: cluster[p.i])
 
-    # calculation objective
-    for i, node in enumerate(nodes):
-        solution.append(node.i)
+    # create solution
+    solution = []
+    for c in centroids:
+        for n in nodes:
+            if n.c == c[0]:
+                solution.append(n)
+    solution_nodes = []
+    for i, node in enumerate(solution):
+        solution_nodes.append(node.i)
         if i == len(nodes) - 1:
-            obj += length(node, nodes[0])
+            obj += length(node, solution[0])
         else:
-            obj += length(node, nodes[i + 1])
+            obj += length(node, solution[i + 1])
 
-    return obj, opt, solution
+    return obj, opt, solution_nodes
 
 
 def solve_it(input_data):
@@ -53,7 +69,8 @@ def solve_it(input_data):
         points.append([float(parts[0]), float(parts[1])])
 
     # calculate the length of the tour
-    obj, opt, solution = greedy_cluster_heuristic(points)
+    # obj, opt, solution = greedy_cluster_heuristic(points)
+    obj, opt, solution = tsp(points)
 
     # prepare the solution in the specified output format
     output_data = '%.2f' % obj + ' ' + str(0) + '\n'
