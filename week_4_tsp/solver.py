@@ -7,6 +7,7 @@ from collections import namedtuple
 import numpy
 from sklearn.cluster import KMeans
 from week_4_tsp.gurobi_model import tsp
+from week_4_tsp.tsp_opt import tsp_opt
 
 Point = namedtuple("Point", ['i', 'c', 'x', 'y'])
 
@@ -20,7 +21,8 @@ def greedy_cluster_heuristic(points):
     obj = 0
     opt = 0
     solution = []
-
+    n = len(points)
+    print("Instance with n={n}".format(n=n))
     # cluster point
     km = KMeans(n_clusters=min(math.ceil(len(points)/5), 50)).fit(points)
     cluster = km.labels_
@@ -69,8 +71,12 @@ def solve_it(input_data):
         points.append([float(parts[0]), float(parts[1])])
 
     # calculate the length of the tour
-    # obj, opt, solution = greedy_cluster_heuristic(points)
-    obj, opt, solution = tsp(points)
+    if len(points) < 575:
+        obj, opt, solution = tsp(points)
+    elif len(points) < 1800:
+        obj, opt, solution = tsp_opt(points)
+    else:
+        obj, opt, solution = greedy_cluster_heuristic(points)
 
     # prepare the solution in the specified output format
     output_data = '%.2f' % obj + ' ' + str(0) + '\n'
@@ -80,7 +86,6 @@ def solve_it(input_data):
 
 
 import sys
-
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:

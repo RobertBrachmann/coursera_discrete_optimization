@@ -56,16 +56,9 @@ def tsp(points):
     m._vars = vars
     m.Params.lazyConstraints = 1
     m.optimize(sub_tour_elim)
-
     vals = m.getAttr('x', vars)
     selected = tuplelist((i, j) for i, j in vals.keys() if vals[i, j] > 0.5)
-
     tour = sub_tour(selected)
-    print(tour)
-
-    print('')
-    print('Optimal tour: %s' % str(tour))
-    print('Optimal cost: %g' % m.objVal)
     if m.status == 2:
         opt = 1
     else:
