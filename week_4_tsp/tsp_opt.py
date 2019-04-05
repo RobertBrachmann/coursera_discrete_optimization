@@ -25,8 +25,8 @@ def tsp_opt(points):
             break
 
     print("Time elapsed {s} sec.".format(s=timer() - start))
-    # plt.plot([cities[tour[i % n]][0] for i in range(n+1)], [cities[tour[i % n]][1] for i in range(n+1)], 'xb-')
-    # plt.show()
+    plt.plot([cities[tour[i % n]][0] for i in range(n+1)], [cities[tour[i % n]][1] for i in range(n+1)], 'xb-')
+    plt.show()
 
     # calculate obj
     obj = 0

@@ -43,7 +43,7 @@ def tsp(points):
             }
 
     m = Model()
-    m.setParam("TimeLimit", 180.0)
+    m.setParam("TimeLimit", 600.0)
     # Create variables
     vars = m.addVars(dist.keys(), obj=dist, vtype=GRB.BINARY, name='e')
     for i, j in vars.keys():
