@@ -31,7 +31,6 @@ def tsp_gen(points, pop_size=10, generation=10):
         pop = ga.evolvePopulation(pop)
 
     # Print final results
-    print("Final distance: " + str(pop.getFittest().getDistance()))
     solution = pop.get_best_solution()
 
     # calculate solution
@@ -48,8 +47,6 @@ def tsp_gen(points, pop_size=10, generation=10):
     plt.show()
 
     return obj, opt, solution
-
-
 
 class City:
     def __init__(self, x=None, y=None, id=None):

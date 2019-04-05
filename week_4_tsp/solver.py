@@ -9,8 +9,9 @@ import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from week_4_tsp.gurobi_model import tsp
 from week_4_tsp.genetic_algorithm import tsp_gen
+from week_4_tsp.TwoOptSolver import TwoOptSolver
 
-Point = namedtuple("Point", ['index','i', 'x', 'y'])
+Point = namedtuple("Point", ['x', 'y'])
 
 
 def length(point1, point2):
@@ -92,30 +93,44 @@ def solve_it(input_data):
     # parse the input
     lines = input_data.split('\n')
 
-    nodeCount = int(lines[0])
+    point_count = int(lines[0])
+
+    # points = []
+    # for i in range(1, nodeCount+1):
+    #     line = lines[i]
+    #     parts = line.split()
+    #     points.append([float(parts[0]), float(parts[1])])
+    #
+    # n = len(points)
+    # if n < 100:
+    #     obj, opt, solution = tsp_gen(points, pop_size=50, generation=500)
+    # elif n < 200:
+    #     obj, opt, solution = tsp_gen(points, pop_size=20, generation=350)
+    # elif n < 600:
+    #     obj, opt, solution = tsp_gen(points, pop_size=15, generation=75)
+    # elif n < 2000:
+    #     obj, opt, solution = tsp_gen(points, pop_size=10, generation=10)
+    # elif n >= 2000:
+    #     obj, opt, solution = tsp_gen(points, pop_size=3, generation=5)
 
     points = []
-    for i in range(1, nodeCount+1):
+    for i in range(1, point_count + 1):
         line = lines[i]
         parts = line.split()
-        points.append([float(parts[0]), float(parts[1])])
+        points.append(Point(float(parts[0]), float(parts[1])))
 
-    n = len(points)
-    if n < 100:
-        obj, opt, solution = tsp(points, pop_size=25, generation=50)
-    elif n < 200:
-        obj, opt, solution = tsp(points, pop_size=20, generation=25)
-    elif n < 600:
-        obj, opt, solution = tsp(points, pop_size=15, generation=20)
-    elif n < 2000:
-        obj, opt, solution = tsp(points, pop_size=10, generation=10)
-    elif n >= 2000:
-        obj, opt, solution = tsp(points, pop_size=5, generation=5)
+    # 2-opt solution
+    solver = TwoOptSolver(points)
+
+    # k-opt solution
+    # obj, opt, solution = k_opt(points, 3, time_limit=3600)
 
     # prepare the solution in the specified output format
-    output_data = '%.2f' % obj + ' ' + str(0) + '\n'
-    output_data += ' '.join(map(str, solution))
+    output_data = solver.solve()
 
+    # prepare the solution in the specified output format
+    # output_data = '%.2f' % obj + ' ' + str(0) + '\n'
+    # output_data += ' '.join(map(str, solution))
     return output_data
 
 
