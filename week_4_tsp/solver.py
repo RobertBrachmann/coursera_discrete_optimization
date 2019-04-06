@@ -1,147 +1,298 @@
-#!/usr/bin/python
+# !/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import math
+import time
 import random
+import pdb
+from datetime import datetime
 from collections import namedtuple
-import matplotlib.pyplot as plt
-
-from sklearn.cluster import KMeans
-from week_4_tsp.gurobi_model import tsp
-from week_4_tsp.genetic_algorithm import tsp_gen
-from week_4_tsp.TwoOptSolver import TwoOptSolver
+# from plot_tour import plotTSP
 
 Point = namedtuple("Point", ['x', 'y'])
 
+global POINTS
+
 
 def length(point1, point2):
-    return math.sqrt((point1.x - point2.x)**2 + (point1.y - point2.y)**2)
-
-
-class Node(object):
-
-    def __init__(self, i, x, y):
-        self.i = i
-        self.x = x
-        self.y = y
-
-
-def greedy_cluster_heuristic(points):
-
-    # instance size
-    n = len(points)
-    print("Instance with n={n}".format(n=n))
-
-    # create nodes
-    nodes = []
-    for i, point in enumerate(points):
-        nodes.append(Node(i, point[0], point[1]))
-
-    # sort nodes
-    nodes.sort(key=lambda j: (j.x, j.y))
-    # create index
-    index = []
-    for i, node in enumerate(nodes):
-       index.append(node.i)
-
-    # create solution
-    kn = min(50, n)
-    solution = [0]
-    while len(index) > 1:
-
-        # get last node
-        current_index = solution[len(solution) - 1]
-
-        # get k neighbours
-        neighbours = []
-        for k in range(0, min(kn, len(index))):
-            neighbours.append(random.choice(index))
-
-        # get nearest neighbour
-        nearest_neighbour = neighbours[0]
-        distance = 1e+9
-        for neighbour in neighbours:
-            new_distance = length(nodes[current_index], nodes[neighbour])
-            if new_distance < distance:
-                nearest_neighbour = neighbour
-
-        # add to solution
-        index.remove(nearest_neighbour)
-        solution.append(nearest_neighbour)
-
-    # calculate solution
-    obj = 0
-    opt = 0
-    solution_nodes = []
-    for i, index in enumerate(solution):
-        solution_nodes.append(nodes[index].i)
-        if i == len(nodes) - 1:
-            obj += length(nodes[index], nodes[0])
-        else:
-            obj += length(nodes[index], nodes[solution[i + 1]])
-
-    plt.plot([points[solution_nodes[i % len(points)]][0] for i in range(len(points)+1)],
-             [points[solution_nodes[i % len(points)]][1] for i in range(len(points)+1)], '.b-')
-    plt.show()
-
-    return obj, opt, solution_nodes
+    return math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
 
 def solve_it(input_data):
-    # Modify this code to run your optimization algorithm
+    global POINTS
 
+    # Modify this code to run your optimization algorithm
+    random.seed(1847859218408232171737)
     # parse the input
     lines = input_data.split('\n')
 
-    point_count = int(lines[0])
-
-    # points = []
-    # for i in range(1, nodeCount+1):
-    #     line = lines[i]
-    #     parts = line.split()
-    #     points.append([float(parts[0]), float(parts[1])])
-    #
-    # n = len(points)
-    # if n < 100:
-    #     obj, opt, solution = tsp_gen(points, pop_size=50, generation=500)
-    # elif n < 200:
-    #     obj, opt, solution = tsp_gen(points, pop_size=20, generation=350)
-    # elif n < 600:
-    #     obj, opt, solution = tsp_gen(points, pop_size=15, generation=75)
-    # elif n < 2000:
-    #     obj, opt, solution = tsp_gen(points, pop_size=10, generation=10)
-    # elif n >= 2000:
-    #     obj, opt, solution = tsp_gen(points, pop_size=3, generation=5)
+    nodeCount = int(lines[0])
 
     points = []
-    for i in range(1, point_count + 1):
+    for i in range(1, nodeCount + 1):
         line = lines[i]
         parts = line.split()
         points.append(Point(float(parts[0]), float(parts[1])))
 
-    # 2-opt solution
-    solver = TwoOptSolver(points)
+    POINTS = points
+    print('Problem instance with N = {}'.format(len(POINTS)))
+    # build a trivial solution
+    # guess = [x for x in range(0, nodeCount)]
+    guess = make_initial_guess(nodeCount)  # nearest neigh
+    init_value = state_value(guess)
+    print('Initial guess computed with value {}'.format(init_value))
+    # print(guess)
+    if nodeCount < 80:
+        time_limit = 900
+    elif nodeCount < 500:
+        time_limit = 300
+    elif nodeCount < 1000:
+        time_limit = 5400
+    else:
+        time_limit = 2400
+    if nodeCount < 30000:
+        print('Starts at {}'.format(datetime.now().time()))
+        solution = local_search(POINTS, guess, init_value, time_limit=time_limit)
+        # solution = random_search(guess)
+    else:
+        solution = guess
 
-    # k-opt solution
-    # obj, opt, solution = k_opt(points, 3, time_limit=3600)
+    # calculate the length of the tour
+    obj = state_value(solution)
+
+    # plotTSP([solution], points)
 
     # prepare the solution in the specified output format
-    output_data = solver.solve()
+    output_data = '%.2f' % obj + ' ' + str(0) + '\n'
+    output_data += ' '.join(map(str, solution))
 
-    # prepare the solution in the specified output format
-    # output_data = '%.2f' % obj + ' ' + str(0) + '\n'
-    # output_data += ' '.join(map(str, solution))
     return output_data
 
 
+def make_initial_guess(node_count):
+    global POINTS
+    s = set(range(node_count))
+    guess = [s.pop()]
+    while len(s) > 1:
+        min_dist = -1
+        best = None
+        for elem in s:
+            if min_dist == -1 or \
+                    length(POINTS[guess[-1]], POINTS[elem]) < min_dist:
+                min_dist = length(POINTS[guess[-1]], POINTS[elem])
+                best = elem
+        guess.append(best)
+        s.remove(best)
+    guess.append(s.pop())
+    return guess
+
+
+def state_value(solution):
+    global POINTS
+    obj = length(POINTS[solution[-1]], POINTS[solution[0]])
+    for index in range(0, len(POINTS) - 1):
+        obj += length(POINTS[solution[index]], POINTS[solution[index + 1]])
+    return obj
+
+
+def ccw(A, B, C):
+    return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x)
+
+
+def intersect(A, B, C, D):
+    return ccw(A, C, D) != ccw(B, C, D) and ccw(A, B, C) != ccw(A, B, D)
+
+
+def random_search(guess):
+    time_limit = 300
+    start = time.time()
+    diff = time.time() - start
+    i = 0
+    best = guess.copy()
+    while diff < time_limit:
+        novel = best.copy()
+        random.shuffle(novel)
+        if state_value(novel) < state_value(best):
+            best = novel
+        i += 1
+        diff = time.time() - start
+    print('Returning solution with {} visited permutations'.format(i))
+    return best
+
+
+def accept(current, novel, temperature):
+    old_val = state_value(current)
+    new_val = state_value(novel)
+    if new_val <= old_val:
+        return True
+    if math.exp(-abs(new_val - old_val) / temperature) > random.random():
+        return True
+    # if random.uniform(temperature, 1) < random.random():
+    # return True
+    return False
+
+
+def local_search(points, guess, guess_val, time_limit=120):
+    # tabu = [] # keep last visited states
+    # tabu_size = 5000
+    best = guess.copy()
+    current = guess
+    lost = 0
+    counter = 0
+    max_iter = 50000
+    T = math.sqrt(len(points))
+    alpha = 0.999
+    min_T = 1e-8
+    start = time.time()
+    diff = time.time() - start
+    while diff < time_limit:
+        if T <= min_T:
+            T = math.sqrt(len(points))
+        # tabu.append(current)
+        neigh = find_neigh(current, [], counter)
+        if neigh is not None:
+            # tabu.append(neigh)
+            # if len(tabu) == tabu_size + 1:
+            # tabu = tabu[1:]
+            if accept(current, neigh, T):
+                current = neigh
+                if state_value(current) < state_value(best):
+                    best = current
+        else:
+            lost += 1
+        counter += 1
+        T *= alpha
+        diff = time.time() - start
+    assert (assert_sol(best, len(points)))
+    print('Returning solution after {} iteration and {} lost iterations at {}'.format(counter, lost,
+                                                                                      datetime.now().time()))
+    return best
+
+
+def find_neigh(current, tabu, counter):
+    global POINTS
+    if counter == 0:
+        rand = len(current) - 1
+    else:
+        rand = None
+    # for k-opt algorithm
+    '''
+    all_sol.sort(key=lambda x: state_value(x))
+    for s in all_sol:
+        if not is_permutation(current, s):
+            if not s in tabu:
+                return s
+    return None
+    '''
+    # for 2-opt
+    neigh = two_opt(current)
+    # if not neigh in tabu:
+    #    return neigh
+    # return None
+    return neigh
+
+
+def two_opt(curr_sol):
+    global POINTS
+    novel = curr_sol.copy()
+    found = False
+    # scan all edges
+    '''
+    for i in range(0, len(curr_sol)-2):
+        for l in range(i+2, len(curr_sol)-1):
+            if intersect(POINTS[curr_sol[i]], POINTS[curr_sol[i+1]],\
+                         POINTS[curr_sol[l]], POINTS[curr_sol[l+1]]):
+                found = True
+                break
+        if found: break
+    '''
+    # or try some random number of them
+    limit = len(curr_sol)
+    while limit > 0:
+        i = random.randint(0, len(curr_sol) - 4)
+        l = random.randint(i + 2, len(curr_sol) - 2)
+        if intersect(POINTS[curr_sol[i]], POINTS[curr_sol[i + 1]], \
+                     POINTS[curr_sol[l]], POINTS[curr_sol[l + 1]]):
+            found = True
+            break
+        limit -= 1
+    if found:
+        novel[i + 1:l + 1] = reversed(novel[i + 1:l + 1])
+    else:
+        l = random.randint(2, len(curr_sol) - 1)
+        i = random.randint(0, len(curr_sol) - l)
+        novel[i:(i + l)] = reversed(novel[i:(i + l)])
+    return novel
+
+
+def is_permutation(sol1, sol2):
+    j1 = 0
+    j2 = sol2.index(sol1[j1])
+    while j1 < len(sol1):
+        if sol1[j1] != sol2[j2 % len(sol2)]:
+            return False
+        j1 += 1
+        j2 += 1
+    return True
+
+
+def k_opt(curr_sol, rand=None):
+    global POINTS
+    all_sol = []
+    if rand is None:
+        rand = random.randint(0, len(curr_sol) - 1)
+    x1 = (curr_sol[rand - 1], rand - 1)
+    x2 = (curr_sol[rand], rand)
+    opt = 5
+    current = curr_sol
+    while opt > 0:
+        length1 = length(POINTS[x1[0]], POINTS[x2[0]])
+        x3 = None
+        to_avoid = {x1[1], x1[1] % len(POINTS),
+                    x2[1], x2[1] % len(POINTS),
+                    x2[1] + 1, (x2[1] + 1) % len(POINTS)}
+        for i in range(len(current)):
+            if i not in to_avoid and \
+                    length(POINTS[x2[0]], POINTS[i]) < length1:
+                x3 = (current[i], i)
+                break
+        if x3 is None:
+            return all_sol
+        x4 = (current[x3[1] - 1], x3[1] - 1)
+        a_sol = [x2[0], x3[0]]
+        i = x3[1] + 1
+        while current[i % len(POINTS)] != x1[0]:
+            a_sol.append(current[i % len(POINTS)])
+            i += 1
+        a_sol += [x1[0], x4[0]]
+        i = x4[1] - 1
+        while current[i % len(POINTS)] != x2[0]:
+            a_sol.append(current[i % len(POINTS)])
+            i -= 1
+        if len(set(a_sol)) != len(POINTS):
+            raise ValueError('Stmg is wrong')
+        all_sol.append(a_sol.copy())
+        opt -= 1
+        x1 = (x1[0], a_sol.index(x1[0]))
+        x2 = (x4[0], a_sol.index(x4[0]))
+        current = a_sol.copy()
+    return all_sol
+
+
+def assert_sol(solution, tot):
+    return len(set(solution)) == tot
+
+
 import sys
+
 if __name__ == '__main__':
     import sys
+
     if len(sys.argv) > 1:
         file_location = sys.argv[1].strip()
         with open(file_location, 'r') as input_data_file:
             input_data = input_data_file.read()
         print(solve_it(input_data))
     else:
-        print('This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/tsp_51_1)')
-
+        print(
+            'This test requires an input file.  Please select one from the data directory. (i.e. python solver.py ./data/tsp_51_1)')
