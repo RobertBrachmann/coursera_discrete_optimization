@@ -7,6 +7,7 @@ import random
 import pdb
 from datetime import datetime
 from collections import namedtuple
+from week_4_tsp.gurobi_model import tsp
 # from plot_tour import plotTSP
 
 Point = namedtuple("Point", ['x', 'y'])
@@ -44,23 +45,25 @@ def solve_it(input_data):
     # print(guess)
     if nodeCount < 80:
         time_limit = 900
+
     elif nodeCount < 500:
         time_limit = 300
     elif nodeCount < 1000:
         time_limit = 5400
     else:
         time_limit = 2400
-    if nodeCount < 30000:
+
+    if nodeCount < 501:
+        # gurobi model
+        obj, opt, solution = tsp(points)
+    elif nodeCount < 30000:
         print('Starts at {}'.format(datetime.now().time()))
         solution = local_search(POINTS, guess, init_value, time_limit=time_limit)
-        # solution = random_search(guess)
+        # calculate the length of the tour
+        obj = state_value(solution)
     else:
         solution = guess
-
-    # calculate the length of the tour
-    obj = state_value(solution)
-
-    # plotTSP([solution], points)
+        obj = state_value(solution)
 
     # prepare the solution in the specified output format
     output_data = '%.2f' % obj + ' ' + str(0) + '\n'

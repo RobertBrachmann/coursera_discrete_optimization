@@ -3,6 +3,17 @@ import math
 import random
 import itertools
 from gurobipy import *
+from sklearn.cluster import KMeans
+
+
+def tsp_cluster(points):
+    n = len(points)
+
+    if n < 201:
+        # one cluster
+        return tsp(points)
+    else:
+        pass
 
 
 def tsp(points):
@@ -43,7 +54,8 @@ def tsp(points):
             }
 
     m = Model()
-    m.setParam("TimeLimit", 600.0)
+    # m.setParam('OutputFlag', False)
+    m.setParam("TimeLimit", 1200.0)
     # Create variables
     vars = m.addVars(dist.keys(), obj=dist, vtype=GRB.BINARY, name='e')
     for i, j in vars.keys():

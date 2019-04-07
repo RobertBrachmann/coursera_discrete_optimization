@@ -1,6 +1,6 @@
 from week_4_tsp.TspSolver import *
 from itertools import combinations
-from time import time
+from timeit import default_timer as timer
 
 
 class TwoOptSolver(TspSolver):
@@ -18,11 +18,12 @@ class TwoOptSolver(TspSolver):
             improved = True
         return improved
 
-    def solve(self, t_threshold=None):
+    def solve(self, t_threshold=1200):
         improved = True
-        t = time()
+        t = timer()
+        print("Start two opt {t}".format(t=t))
         while improved:
-            if t_threshold and time() - t >= t_threshold:
+            if t_threshold and timer() - t >= t_threshold:
                 break
             improved = False
             for start, end in combinations(range(1, len(self.cycle) - 1), 2):
