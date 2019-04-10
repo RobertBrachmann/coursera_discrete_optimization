@@ -4,6 +4,8 @@
 from collections import namedtuple
 import math
 
+from week_6_fl.facility_location import *
+
 Point = namedtuple("Point", ['x', 'y'])
 Facility = namedtuple("Facility", ['index', 'setup_cost', 'capacity', 'location'])
 Customer = namedtuple("Customer", ['index', 'demand', 'location'])
@@ -49,14 +51,16 @@ def solve_it(input_data):
             solution[customer.index] = facility_index
             capacity_remaining[facility_index] -= customer.demand
 
-    used = [0]*len(facilities)
+    # calculate the cost of the solution
+    used = [0] * len(facilities)
     for facility_index in solution:
         used[facility_index] = 1
-
-    # calculate the cost of the solution
     obj = sum([f.setup_cost*used[f.index] for f in facilities])
     for customer in customers:
         obj += length(customer.location, facilities[solution[customer.index]].location)
+
+    # plot solution
+    plot_solution(facilities, customers, solution)
 
     # prepare the solution in the specified output format
     output_data = '%.2f' % obj + ' ' + str(0) + '\n'
