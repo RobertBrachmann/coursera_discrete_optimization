@@ -59,6 +59,9 @@ def solve_it(input_data):
     for customer in customers:
         obj += length(customer.location, facilities[solution[customer.index]].location)
 
+    # random nearest neighbour
+    obj, solution = random_nearest_neighbour(facilities, customers)
+
     # plot solution
     plot_solution(facilities, customers, solution)
 

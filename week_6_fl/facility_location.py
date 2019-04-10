@@ -1,4 +1,5 @@
 import math
+import random
 import matplotlib.pyplot as plt
 from collections import namedtuple
 
@@ -87,11 +88,53 @@ def random_nearest_neighbour(facilities, customers):
 
     # calculates distance between locations
     def length(point1, point2):
-        return math.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
+        return math.sqrt((point1.x - point2.x) ** 2 +
+                         (point1.y - point2.y) ** 2)
 
+    # var
     solution = [-1] * len(customers)
+    # helper
+    assigned = []
+    load = [0] * len(facilities)
 
+    print("Instance C={c} F={f}".format(c=len(customers), f=len(facilities)))
 
+    #############
+    # Algorithm #
+    #############
+
+    # while not all  assigned
+    while -1 in solution:
+
+        # get not assigned customers
+        not_assigned = []
+        for i, f in enumerate(solution):
+            if f == -1:
+                not_assigned.append(i)
+
+        # select random customer
+        i = random.choice(not_assigned)
+
+        # get nearest resource feasible facility
+        distance = 1e+20
+        f_new = None
+        for f, facility in enumerate(facilities):
+            # check if resource feasible
+            if load[f] + customers[i].demand <= facility.capacity:
+                # check distance
+                new_distance = length(customers[i].location, facility.location)
+                if new_distance <= distance:
+                    f_new = f
+                    distance = new_distance
+
+        # set facility
+        solution[i] = f_new
+
+        # update load on facility
+        load[f_new] = load[f_new] + customers[i].demand
+
+        # add to assigned customers
+        assigned.append(i)
 
     # calculate the cost of the solution
     used = [0] * len(facilities)
@@ -101,4 +144,4 @@ def random_nearest_neighbour(facilities, customers):
     for customer in customers:
         obj += length(customer.location, facilities[solution[customer.index]].location)
 
-    return solution
+    return obj, solution
