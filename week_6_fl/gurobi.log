@@ -1,0 +1,168 @@
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:51:01
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:51:24
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:52:14
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:52:22
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:52:42
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.01 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%
+
+Gurobi 8.1.0 (win64, Python) logging started 04/10/19 15:53:49
+
+Optimize a model with 20 rows, 27 columns and 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 4e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Presolve time: 0.00s
+Presolved: 20 rows, 27 columns, 54 nonzeros
+Variable types: 18 continuous, 9 integer (9 binary)
+
+Root relaxation: objective 4.723713e+00, 15 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0       4.7237129    4.72371  0.00%     -    0s
+
+Explored 0 nodes (15 simplex iterations) in 0.00 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 1: 4.72371 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.723712908962e+00, best bound 4.723712908962e+00, gap 0.0000%

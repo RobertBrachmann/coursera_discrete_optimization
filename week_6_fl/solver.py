@@ -5,6 +5,7 @@ from collections import namedtuple
 import math
 
 from week_6_fl.facility_location import *
+from week_6_fl.gurobi_model import *
 
 Point = namedtuple("Point", ['x', 'y'])
 Facility = namedtuple("Facility", ['index', 'setup_cost', 'capacity', 'location'])
@@ -61,6 +62,9 @@ def solve_it(input_data):
 
     # random nearest neighbour
     obj, solution = random_nearest_neighbour(facilities, customers)
+
+    # gurobi model
+    obj, solution = gurobi_model(facilities, customers)
 
     # plot solution
     plot_solution(facilities, customers, solution)
